@@ -1,4 +1,5 @@
 ﻿# Pepperdine.Helpers.ConfigurationHelper
+https://github.com/Pepperdine-University/Pepperdine.Helpers.ConfigurationHelper
 
 A .NET helper class that eases access to values in appsettings. It also securely manages secrets in `appsettings.secrets.json` by encrypting sensitive values on disk using Windows DPAPI (LocalMachine scope) while letting you retrieve plaintext at runtime.
 
