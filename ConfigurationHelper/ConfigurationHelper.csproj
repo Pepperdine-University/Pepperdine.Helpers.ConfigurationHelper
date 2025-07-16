@@ -7,7 +7,7 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>Pepperdine.Helpers.ConfigurationHelper</Title>
     <PackageId>Pepperdine.Helpers.ConfigurationHelper</PackageId>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <Authors>Daniil Gedgafov</Authors>
     <Company>Pepperdine University</Company>
     <Description>Helps grab configs from the appsettings files. Also encrypts/decrypts any values put into appsettings.secrets.json with the machine key</Description>
