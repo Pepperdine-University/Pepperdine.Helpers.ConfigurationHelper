@@ -15,11 +15,11 @@ public sealed class ConfigurationHelperTests
     private const string MISSING_KEY = "MissingKey";
     private const string MISSING_KEY_MESSAGE = "No value found for the key 'MissingKey'";
     private const string MY_SECRET_KEY = "MySecretKey";
-    private const string SUPER_SECRET_PASSWORD = "SuperSecretPassword123";
+    private const string MY_SECRET_VALUE = "SuperSecretPassword123";
     private const string CONNECTION_STRING_KEY = "ConnectionStrings:Db";
     private const string CONNECTION_STRING_VALUE = "Server=myserver;Database=mydb;User=myuser;Password=mypassword";
-    private const string ENCRYPTED_KEY = "EncryptedKey";
-    private const string ALREADY_ENCRYPTED_SECRET_VALUE = "AlreadyEncryptedSecret";
+    private const string ALREADY_ENCRYPTED_KEY = "EncryptedKey";
+    private const string ALREADY_ENCRYPTED_VALUE = "AlreadyEncryptedSecret";
     private const string EMPTY_SECRET_KEY = "EmptySecret";
     private const string WHITESPACE_SECRET_KEY = "WhitespaceSecret";
     private const string EXISTING_ENCRYPTED_SECRET_KEY = "ExistingEncryptedSecret";
@@ -70,7 +70,7 @@ public sealed class ConfigurationHelperTests
             secretsPath,
             $$"""
             {
-              "{{MY_SECRET_KEY}}": "{{SUPER_SECRET_PASSWORD}}",
+              "{{MY_SECRET_KEY}}": "{{MY_SECRET_VALUE}}",
               "ConnectionStrings": {
                 "Db": "{{CONNECTION_STRING_VALUE}}"
               }
@@ -81,9 +81,9 @@ public sealed class ConfigurationHelperTests
 
         string encryptedJson = File.ReadAllText(secretsPath);
 
-        Assert.DoesNotContain(SUPER_SECRET_PASSWORD, encryptedJson);
+        Assert.DoesNotContain(MY_SECRET_VALUE, encryptedJson);
         Assert.DoesNotContain(CONNECTION_STRING_VALUE, encryptedJson);
-        Assert.Equal(SUPER_SECRET_PASSWORD, ConfigurationHelperClass.GetValue(MY_SECRET_KEY));
+        Assert.Equal(MY_SECRET_VALUE, ConfigurationHelperClass.GetValue(MY_SECRET_KEY));
         Assert.Equal(
             CONNECTION_STRING_VALUE,
             ConfigurationHelperClass.GetValue(CONNECTION_STRING_KEY));
@@ -95,12 +95,12 @@ public sealed class ConfigurationHelperTests
         using var scope = new TempWorkingDirectoryScope();
         string secretsPath = Path.Combine(scope.DirectoryPath, APP_SETTINGS_SECRETS_FILE_NAME);
 
-        string encryptedSecret = Protect(ALREADY_ENCRYPTED_SECRET_VALUE);
+        string encryptedSecret = Protect(ALREADY_ENCRYPTED_VALUE);
         File.WriteAllText(
             secretsPath,
             $$"""
             {
-              "{{ENCRYPTED_KEY}}": "{{encryptedSecret}}"
+              "{{ALREADY_ENCRYPTED_KEY}}": "{{encryptedSecret}}"
             }
             """);
 
@@ -109,7 +109,7 @@ public sealed class ConfigurationHelperTests
         string jsonAfterLoad = File.ReadAllText(secretsPath);
 
         Assert.Contains(encryptedSecret, jsonAfterLoad);
-        Assert.Equal(ALREADY_ENCRYPTED_SECRET_VALUE, ConfigurationHelperClass.GetValue(ENCRYPTED_KEY));
+        Assert.Equal(ALREADY_ENCRYPTED_VALUE, ConfigurationHelperClass.GetValue(ALREADY_ENCRYPTED_KEY));
     }
 
     [Fact]
