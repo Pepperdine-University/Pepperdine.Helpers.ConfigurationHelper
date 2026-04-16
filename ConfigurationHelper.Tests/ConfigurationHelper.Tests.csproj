@@ -2,9 +2,10 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <RootNamespace>Pepperdine.Helpers.ConfigurationHelper.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,7 +18,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ConfigurationHelper\ConfigurationHelper.csproj" />
+    <ProjectReference Include="..\ConfigurationHelper\ConfigurationHelper.csproj">
+      <Aliases>ConfigLib</Aliases>
+    </ProjectReference>
   </ItemGroup>
 
 </Project>

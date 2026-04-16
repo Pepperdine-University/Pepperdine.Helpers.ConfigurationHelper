@@ -1,14 +1,7 @@
-using System.Security.Cryptography;
-using System.Runtime.Versioning;
-using System.Text;
-using Microsoft.Extensions.Configuration;
-using Xunit;
-using ConfigurationHelperClass = Pepperdine.Helpers.ConfigurationHelper;
-
-namespace ConfigurationHelper.Tests;
+namespace Pepperdine.Helpers.ConfigurationHelper.Tests;
 
 [SupportedOSPlatform("windows")]
-public sealed class ConfigurationHelperTests
+public sealed class ConfigurationHelperTest
 {
     private const string PLAIN_KEY = "PlainKey";
     private const string PLAIN_VALUE = "PlainValue";
@@ -17,7 +10,8 @@ public sealed class ConfigurationHelperTests
     private const string MY_SECRET_KEY = "MySecretKey";
     private const string MY_SECRET_VALUE = "SuperSecretPassword123";
     private const string CONNECTION_STRING_KEY = "ConnectionStrings:Db";
-    private const string CONNECTION_STRING_VALUE = "Server=myserver;Database=mydb;User=myuser;Password=mypassword";
+    private const string CONNECTION_STRING_VALUE =
+        "Server=myserver;Database=mydb;User=myuser;Password=mypassword";
     private const string ALREADY_ENCRYPTED_KEY = "EncryptedKey";
     private const string ALREADY_ENCRYPTED_VALUE = "AlreadyEncryptedSecret";
     private const string EMPTY_SECRET_KEY = "EmptySecret";
@@ -29,12 +23,15 @@ public sealed class ConfigurationHelperTests
     private const string MALFORMED_KEY = "MalformedKey";
     private const string MALFORMED_VALUE = "%%% definitely-not-base64 %%%";
     private const string WHITESPACE_SECRET_VALUE = "   ";
-    private const string APP_SETTINGS_SECRETS_FILE_NAME = "appsettings.secrets.json";
+    internal const string APP_SETTINGS_SECRETS_FILE_NAME = "appsettings.secrets.json";
 
+    /// <summary>
+    /// Verifies that a plain configuration value is returned unchanged.
+    /// </summary>
     [Fact]
-    public void GetValue_ReturnsPlainConfigurationValue()
+    public void ConfigurationHelper_GetValue_ReturnsPlainConfigurationValue()
     {
-        using var scope = new TempWorkingDirectoryScope();
+        using TempWorkingDirectoryScope scope = new();
 
         ConfigurationHelperClass.Configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -48,22 +45,29 @@ public sealed class ConfigurationHelperTests
         Assert.Equal(PLAIN_VALUE, value);
     }
 
+    /// <summary>
+    /// Verifies that a missing key throws the expected exception.
+    /// </summary>
     [Fact]
-    public void GetValue_ThrowsWhenKeyIsMissing()
+    public void ConfigurationHelper_GetValue_ThrowsWhenKeyIsMissing()
     {
-        using var scope = new TempWorkingDirectoryScope();
+        using TempWorkingDirectoryScope scope = new();
 
         ConfigurationHelperClass.Configuration = new ConfigurationBuilder().Build();
 
-        KeyNotFoundException ex = Assert.Throws<KeyNotFoundException>(() => ConfigurationHelperClass.GetValue(MISSING_KEY));
+        KeyNotFoundException exception = Assert.Throws<KeyNotFoundException>(
+            () => ConfigurationHelperClass.GetValue(MISSING_KEY));
 
-        Assert.Equal(MISSING_KEY_MESSAGE, ex.Message);
+        Assert.Equal(MISSING_KEY_MESSAGE, exception.Message);
     }
 
+    /// <summary>
+    /// Verifies that plaintext secrets are encrypted on load while plaintext values remain accessible.
+    /// </summary>
     [Fact]
-    public void Configuration_EncryptsPlaintextSecretsFile_AndReturnsPlaintextValues()
+    public void ConfigurationHelper_Configuration_EncryptsPlaintextSecretsFileAndReturnsPlaintextValues()
     {
-        using var scope = new TempWorkingDirectoryScope();
+        using TempWorkingDirectoryScope scope = new();
         string secretsPath = Path.Combine(scope.DirectoryPath, APP_SETTINGS_SECRETS_FILE_NAME);
 
         File.WriteAllText(
@@ -83,16 +87,21 @@ public sealed class ConfigurationHelperTests
 
         Assert.DoesNotContain(MY_SECRET_VALUE, encryptedJson);
         Assert.DoesNotContain(CONNECTION_STRING_VALUE, encryptedJson);
-        Assert.Equal(MY_SECRET_VALUE, ConfigurationHelperClass.GetValue(MY_SECRET_KEY));
+        Assert.Equal(
+            MY_SECRET_VALUE,
+            ConfigurationHelperClass.GetValue(MY_SECRET_KEY));
         Assert.Equal(
             CONNECTION_STRING_VALUE,
             ConfigurationHelperClass.GetValue(CONNECTION_STRING_KEY));
     }
 
+    /// <summary>
+    /// Verifies that encrypted secrets remain unchanged when they are already protected.
+    /// </summary>
     [Fact]
-    public void Configuration_LoadsAlreadyEncryptedSecretsWithoutRewritingValues()
+    public void ConfigurationHelper_Configuration_LoadsAlreadyEncryptedSecretsWithoutRewritingValues()
     {
-        using var scope = new TempWorkingDirectoryScope();
+        using TempWorkingDirectoryScope scope = new();
         string secretsPath = Path.Combine(scope.DirectoryPath, APP_SETTINGS_SECRETS_FILE_NAME);
 
         string encryptedSecret = Protect(ALREADY_ENCRYPTED_VALUE);
@@ -109,13 +118,18 @@ public sealed class ConfigurationHelperTests
         string jsonAfterLoad = File.ReadAllText(secretsPath);
 
         Assert.Contains(encryptedSecret, jsonAfterLoad);
-        Assert.Equal(ALREADY_ENCRYPTED_VALUE, ConfigurationHelperClass.GetValue(ALREADY_ENCRYPTED_KEY));
+        Assert.Equal(
+            ALREADY_ENCRYPTED_VALUE,
+            ConfigurationHelperClass.GetValue(ALREADY_ENCRYPTED_KEY));
     }
 
+    /// <summary>
+    /// Verifies that blank or whitespace-only secrets are not rewritten.
+    /// </summary>
     [Fact]
-    public void Configuration_LeavesBlankAndWhitespaceSecretValuesUntouched()
+    public void ConfigurationHelper_Configuration_LeavesBlankAndWhitespaceSecretValuesUntouched()
     {
-        using var scope = new TempWorkingDirectoryScope();
+        using TempWorkingDirectoryScope scope = new();
         string secretsPath = Path.Combine(scope.DirectoryPath, APP_SETTINGS_SECRETS_FILE_NAME);
 
         File.WriteAllText(
@@ -131,16 +145,25 @@ public sealed class ConfigurationHelperTests
 
         string jsonAfterLoad = File.ReadAllText(secretsPath);
 
-        Assert.Contains($@"""{EMPTY_SECRET_KEY}"": """"", jsonAfterLoad);
-        Assert.Contains($@"""{WHITESPACE_SECRET_KEY}"": ""{WHITESPACE_SECRET_VALUE}""", jsonAfterLoad);
-        Assert.Throws<ArgumentException>(() => ConfigurationHelperClass.GetValue(EMPTY_SECRET_KEY));
-        Assert.Throws<ArgumentException>(() => ConfigurationHelperClass.GetValue(WHITESPACE_SECRET_KEY));
+        Assert.Contains($"""
+                         "{EMPTY_SECRET_KEY}": ""
+                         """, jsonAfterLoad);
+        Assert.Contains($"""
+                         "{WHITESPACE_SECRET_KEY}": "{WHITESPACE_SECRET_VALUE}"
+                         """, jsonAfterLoad);
+        Assert.Throws<ArgumentException>(
+            () => ConfigurationHelperClass.GetValue(EMPTY_SECRET_KEY));
+        Assert.Throws<ArgumentException>(
+            () => ConfigurationHelperClass.GetValue(WHITESPACE_SECRET_KEY));
     }
 
+    /// <summary>
+    /// Verifies that malformed base64 content is returned as originally configured.
+    /// </summary>
     [Fact]
-    public void GetValue_ReturnsOriginalValue_WhenConfiguredValueIsMalformedBase64()
+    public void ConfigurationHelper_GetValue_ReturnsOriginalValueWhenConfiguredValueIsMalformedBase64()
     {
-        using var scope = new TempWorkingDirectoryScope();
+        using TempWorkingDirectoryScope scope = new();
 
         ConfigurationHelperClass.Configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -154,10 +177,13 @@ public sealed class ConfigurationHelperTests
         Assert.Equal(MALFORMED_VALUE, value);
     }
 
+    /// <summary>
+    /// Verifies that only new plaintext secrets are encrypted when mixed values are present.
+    /// </summary>
     [Fact]
-    public void Configuration_EncryptsOnlyNewPlaintextValues_WhenFileContainsMixedSecrets()
+    public void ConfigurationHelper_Configuration_EncryptsOnlyNewPlaintextValuesWhenFileContainsMixedSecrets()
     {
-        using var scope = new TempWorkingDirectoryScope();
+        using TempWorkingDirectoryScope scope = new();
         string secretsPath = Path.Combine(scope.DirectoryPath, APP_SETTINGS_SECRETS_FILE_NAME);
 
         string existingEncryptedSecret = Protect(EXISTING_ENCRYPTED_SECRET_VALUE);
@@ -178,54 +204,31 @@ public sealed class ConfigurationHelperTests
 
         Assert.Contains(existingEncryptedSecret, jsonAfterLoad);
         Assert.DoesNotContain(NEW_PLAIN_SECRET_VALUE, jsonAfterLoad);
-        Assert.Contains($@"""{EMPTY_SECRET_KEY}"": """"", jsonAfterLoad);
-        Assert.Contains($@"""{WHITESPACE_SECRET_KEY}"": ""{WHITESPACE_SECRET_VALUE}""", jsonAfterLoad);
-        Assert.Equal(EXISTING_ENCRYPTED_SECRET_VALUE, ConfigurationHelperClass.GetValue(EXISTING_ENCRYPTED_SECRET_KEY));
-        Assert.Equal(NEW_PLAIN_SECRET_VALUE, ConfigurationHelperClass.GetValue(NEW_PLAIN_SECRET_KEY));
-        Assert.Throws<ArgumentException>(() => ConfigurationHelperClass.GetValue(EMPTY_SECRET_KEY));
-        Assert.Throws<ArgumentException>(() => ConfigurationHelperClass.GetValue(WHITESPACE_SECRET_KEY));
+        Assert.Contains($"""
+                         "{EMPTY_SECRET_KEY}": ""
+                         """, jsonAfterLoad);
+        Assert.Contains($"""
+                         "{WHITESPACE_SECRET_KEY}": "{WHITESPACE_SECRET_VALUE}"
+                         """, jsonAfterLoad);
+        Assert.Equal(
+            EXISTING_ENCRYPTED_SECRET_VALUE,
+            ConfigurationHelperClass.GetValue(EXISTING_ENCRYPTED_SECRET_KEY));
+        Assert.Equal(
+            NEW_PLAIN_SECRET_VALUE,
+            ConfigurationHelperClass.GetValue(NEW_PLAIN_SECRET_KEY));
+        Assert.Throws<ArgumentException>(
+            () => ConfigurationHelperClass.GetValue(EMPTY_SECRET_KEY));
+        Assert.Throws<ArgumentException>(
+            () => ConfigurationHelperClass.GetValue(WHITESPACE_SECRET_KEY));
     }
 
     private static string Protect(string value)
     {
         byte[] plainBytes = Encoding.UTF8.GetBytes(value);
-        byte[] encrypted = ProtectedData.Protect(plainBytes, null, DataProtectionScope.LocalMachine);
-        return Convert.ToBase64String(encrypted);
-    }
-
-    private sealed class TempWorkingDirectoryScope : IDisposable
-    {
-        private readonly string _originalDirectory = Environment.CurrentDirectory;
-        private readonly string _secretsPath;
-        private readonly string? _originalSecretsContent;
-
-        public TempWorkingDirectoryScope()
-        {
-            DirectoryPath = AppContext.BaseDirectory;
-            _secretsPath = Path.Combine(DirectoryPath, APP_SETTINGS_SECRETS_FILE_NAME);
-            _originalSecretsContent = File.Exists(_secretsPath) ? File.ReadAllText(_secretsPath) : null;
-            Environment.CurrentDirectory = DirectoryPath;
-        }
-
-        public string DirectoryPath { get; }
-
-        public void Dispose()
-        {
-            ConfigurationHelperClass.Configuration = new ConfigurationBuilder().Build();
-
-            Environment.CurrentDirectory = _originalDirectory;
-
-            if (_originalSecretsContent is null)
-            {
-                if (File.Exists(_secretsPath))
-                {
-                    File.Delete(_secretsPath);
-                }
-            }
-            else
-            {
-                File.WriteAllText(_secretsPath, _originalSecretsContent);
-            }
-        }
+        byte[] encryptedBytes = ProtectedData.Protect(
+            plainBytes,
+            optionalEntropy: null,
+            scope: DataProtectionScope.LocalMachine);
+        return Convert.ToBase64String(encryptedBytes);
     }
 }
