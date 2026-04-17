@@ -29,7 +29,7 @@ public sealed class ConfigurationHelperTest
     /// Verifies that a plain configuration value is returned unchanged.
     /// </summary>
     [Fact]
-    public void ConfigurationHelper_GetValue_ReturnsPlainConfigurationValue()
+    public void GetValue_ReturnsPlainConfigurationValue()
     {
         using TempWorkingDirectoryScope scope = new();
 
@@ -49,7 +49,7 @@ public sealed class ConfigurationHelperTest
     /// Verifies that a missing key throws the expected exception.
     /// </summary>
     [Fact]
-    public void ConfigurationHelper_GetValue_ThrowsWhenKeyIsMissing()
+    public void GetValue_ThrowsWhenKeyIsMissing()
     {
         using TempWorkingDirectoryScope scope = new();
 
@@ -65,7 +65,7 @@ public sealed class ConfigurationHelperTest
     /// Verifies that plaintext secrets are encrypted on load while plaintext values remain accessible.
     /// </summary>
     [Fact]
-    public void ConfigurationHelper_Configuration_EncryptsPlaintextSecretsFileAndReturnsPlaintextValues()
+    public void Configuration_EncryptsPlaintextSecretsFileAndReturnsPlaintextValues()
     {
         using TempWorkingDirectoryScope scope = new();
         string secretsPath = Path.Combine(scope.DirectoryPath, APP_SETTINGS_SECRETS_FILE_NAME);
@@ -99,7 +99,7 @@ public sealed class ConfigurationHelperTest
     /// Verifies that encrypted secrets remain unchanged when they are already protected.
     /// </summary>
     [Fact]
-    public void ConfigurationHelper_Configuration_LoadsAlreadyEncryptedSecretsWithoutRewritingValues()
+    public void Configuration_LoadsAlreadyEncryptedSecretsWithoutRewritingValues()
     {
         using TempWorkingDirectoryScope scope = new();
         string secretsPath = Path.Combine(scope.DirectoryPath, APP_SETTINGS_SECRETS_FILE_NAME);
@@ -127,7 +127,7 @@ public sealed class ConfigurationHelperTest
     /// Verifies that blank or whitespace-only secrets are not rewritten.
     /// </summary>
     [Fact]
-    public void ConfigurationHelper_Configuration_LeavesBlankAndWhitespaceSecretValuesUntouched()
+    public void Configuration_LeavesBlankAndWhitespaceSecretValuesUntouched()
     {
         using TempWorkingDirectoryScope scope = new();
         string secretsPath = Path.Combine(scope.DirectoryPath, APP_SETTINGS_SECRETS_FILE_NAME);
@@ -161,7 +161,7 @@ public sealed class ConfigurationHelperTest
     /// Verifies that malformed base64 content is returned as originally configured.
     /// </summary>
     [Fact]
-    public void ConfigurationHelper_GetValue_ReturnsOriginalValueWhenConfiguredValueIsMalformedBase64()
+    public void GetValue_ReturnsOriginalValueWhenConfiguredValueIsMalformedBase64()
     {
         using TempWorkingDirectoryScope scope = new();
 
@@ -181,7 +181,7 @@ public sealed class ConfigurationHelperTest
     /// Verifies that only new plaintext secrets are encrypted when mixed values are present.
     /// </summary>
     [Fact]
-    public void ConfigurationHelper_Configuration_EncryptsOnlyNewPlaintextValuesWhenFileContainsMixedSecrets()
+    public void Configuration_EncryptsOnlyNewPlaintextValuesWhenFileContainsMixedSecrets()
     {
         using TempWorkingDirectoryScope scope = new();
         string secretsPath = Path.Combine(scope.DirectoryPath, APP_SETTINGS_SECRETS_FILE_NAME);
